@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { NextPage } from 'next';
@@ -29,27 +30,32 @@ const Page: NextPage = () => {
 
   // Load settings from localStorage on mount
   useEffect(() => {
-    const savedSettings = localStorage.getItem('mindmateChatSettings');
-    if (savedSettings) {
-      try {
-        const parsedSettings = JSON.parse(savedSettings);
-        setSettings(parsedSettings);
-      } catch (error) {
-        console.error("Failed to parse settings from localStorage", error);
-        // Set default background color if parsing fails or if bgColor is not set
-        if (!settings.bgColor) {
-           setSettings(prev => ({ ...prev, bgColor: '#F0E6FF'}));
+    if (typeof window !== 'undefined') {
+      const savedSettingsJson = localStorage.getItem('mindmateChatSettings');
+      if (savedSettingsJson) {
+        try {
+          const parsedSavedSettings = JSON.parse(savedSettingsJson) as Partial<ChatSettings>;
+          // Update settings by merging saved ones over the initial defaults.
+          // This ensures that if localStorage has partial data, we don't lose other default values.
+          // And if localStorage has a specific value (like an empty string for bgImage), it's respected.
+          setSettings(currentSettings => ({
+            ...currentSettings, // Start with current state (which includes initial defaults from useState)
+            ...parsedSavedSettings, // Override with values from localStorage
+          }));
+        } catch (error) {
+          console.error("Failed to parse settings from localStorage", error);
+          // If parsing fails, settings will retain their initial default values from useState.
         }
       }
-    } else {
-       // Ensure default bgColor is set if nothing in localStorage
-       setSettings(prev => ({ ...prev, bgColor: '#F0E6FF'}));
+      // If no savedSettingsJson, settings already hold the initial defaults from useState.
     }
-  }, []);
+  }, []); // Empty dependency array: runs once on mount, client-side.
 
   // Save settings to localStorage when they change
   useEffect(() => {
-    localStorage.setItem('mindmateChatSettings', JSON.stringify(settings));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('mindmateChatSettings', JSON.stringify(settings));
+    }
   }, [settings]);
 
 
