@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Message } from '@/types';
@@ -5,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { format } from 'date-fns';
 import { User, Bot } from 'lucide-react';
+import { useState, useEffect } from 'react'; // Import useState and useEffect
 
 interface MessageItemProps {
   message: Message;
@@ -12,6 +14,23 @@ interface MessageItemProps {
 
 export function MessageItem({ message }: MessageItemProps) {
   const isUser = message.sender === 'user';
+  const [formattedTimestamp, setFormattedTimestamp] = useState<string | null>(null);
+
+  useEffect(() => {
+    // This ensures timestamp formatting occurs only on the client, after hydration.
+    try {
+      const dateObject = new Date(message.timestamp);
+      if (!isNaN(dateObject.getTime())) {
+        setFormattedTimestamp(format(dateObject, 'p'));
+      } else {
+        // Fallback for invalid dates
+        setFormattedTimestamp("Invalid time");
+      }
+    } catch (error) {
+      console.error("Error formatting date for message:", message.id, error);
+      setFormattedTimestamp("Time N/A"); // Fallback for formatting errors
+    }
+  }, [message.timestamp]); // Re-run if message.timestamp changes
 
   return (
     <div
@@ -36,10 +55,11 @@ export function MessageItem({ message }: MessageItemProps) {
         <p
           className={cn(
             "text-xs mt-1",
-            isUser ? "text-primary-foreground/70 text-right" : "text-muted-foreground text-left"
+            isUser ? "text-primary-foreground/70 text-right" : "text-muted-foreground text-left",
+            !formattedTimestamp && "h-4" // Placeholder height before client-side rendering
           )}
         >
-          {format(new Date(message.timestamp), 'p')}
+          {formattedTimestamp || <>&nbsp;</>} {/* Show formatted time or a non-breaking space as placeholder */}
         </p>
       </div>
     </div>
