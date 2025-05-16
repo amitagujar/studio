@@ -57,6 +57,7 @@ export function SettingsPanel({
           <SheetTitle>Chat Settings</SheetTitle>
           <SheetDescription>
             Customize your chat experience. Changes will be applied when you click "Apply".
+            <br />For mock Python API history, use URL: <code>/api/python-chat-history</code>
           </SheetDescription>
         </SheetHeader>
         <div className="grid gap-6 py-6">
@@ -91,7 +92,7 @@ export function SettingsPanel({
             <Input
               id="apiUrl"
               type="text"
-              placeholder="https://api.example.com/chat-history"
+              placeholder="/api/python-chat-history"
               value={currentApiUrl}
               onChange={(e) => setCurrentApiUrl(e.target.value)}
             />

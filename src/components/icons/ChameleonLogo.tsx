@@ -1,6 +1,8 @@
 import type { SVGProps } from 'react';
 
-export function ChameleonLogo(props: SVGProps<SVGSVGElement>) {
+// This file should be renamed to MindmateLogo.tsx if your tooling allows for file renames.
+// For now, the function name is updated.
+export function MindmateLogo(props: SVGProps<SVGSVGElement>) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
