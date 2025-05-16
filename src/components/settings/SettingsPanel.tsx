@@ -1,6 +1,8 @@
+
 "use client";
 
 import * as React from 'react';
+import Image from 'next/image';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,7 +16,8 @@ import {
   SheetClose,
 } from "@/components/ui/sheet";
 import type { ChatSettings } from '@/types';
-import { Palette, Image as ImageIcon, Link2, Check } from 'lucide-react';
+import { Palette, Image as ImageIcon, Link2, Check, XCircle, Upload } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface SettingsPanelProps {
   isOpen: boolean;
@@ -34,12 +37,14 @@ export function SettingsPanel({
   const [currentBgColor, setCurrentBgColor] = React.useState(settings.bgColor);
   const [currentBgImage, setCurrentBgImage] = React.useState(settings.bgImage);
   const [currentApiUrl, setCurrentApiUrl] = React.useState(settings.chatHistoryApiUrl);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
 
   React.useEffect(() => {
     setCurrentBgColor(settings.bgColor);
     setCurrentBgImage(settings.bgImage);
     setCurrentApiUrl(settings.chatHistoryApiUrl);
-  }, [settings]);
+  }, [settings, isOpen]); // Also reset on open to reflect current live settings
 
   const handleApplyChanges = () => {
     onSettingsChange({
@@ -50,9 +55,42 @@ export function SettingsPanel({
     onOpenChange(false);
   };
 
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        toast({
+          title: "Image Too Large",
+          description: "Please select an image smaller than 5MB.",
+          variant: "destructive",
+        });
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setCurrentBgImage(reader.result as string);
+      };
+      reader.onerror = () => {
+        toast({
+          title: "Error Reading File",
+          description: "Could not read the selected image file.",
+          variant: "destructive",
+        });
+      }
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleClearImage = () => {
+    setCurrentBgImage('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''; // Reset file input
+    }
+  };
+
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[400px] sm:w-[540px] bg-card">
+      <SheetContent className="w-[400px] sm:w-[540px] bg-card overflow-y-auto">
         <SheetHeader>
           <SheetTitle>Chat Settings</SheetTitle>
           <SheetDescription>
@@ -73,18 +111,47 @@ export function SettingsPanel({
               className="w-full h-10 p-1"
             />
           </div>
+
           <div className="grid gap-3">
-            <Label htmlFor="bgImage" className="flex items-center">
-              <ImageIcon className="mr-2 h-4 w-4" /> Background Image URL
+            <Label htmlFor="bgImageFile" className="flex items-center">
+              <ImageIcon className="mr-2 h-4 w-4" /> Background Image
             </Label>
             <Input
-              id="bgImage"
-              type="text"
-              placeholder="https://example.com/image.png"
-              value={currentBgImage}
-              onChange={(e) => setCurrentBgImage(e.target.value)}
+              id="bgImageFile"
+              type="file"
+              accept="image/*"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              className="hidden" // Hidden, triggered by button
             />
+            <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
+              <Upload className="mr-2 h-4 w-4" /> Choose Image
+            </Button>
+            {currentBgImage && (
+              <div className="mt-2 space-y-2">
+                <p className="text-sm text-muted-foreground">Preview:</p>
+                <div className="relative w-full h-32 rounded-md border overflow-hidden">
+                  <Image
+                    src={currentBgImage}
+                    alt="Background preview"
+                    layout="fill"
+                    objectFit="cover"
+                    unoptimized={currentBgImage.startsWith('data:image')} // Data URLs don't need Next.js optimization
+                  />
+                </div>
+                <Button variant="outline" size="sm" onClick={handleClearImage} className="w-full">
+                  <XCircle className="mr-2 h-4 w-4" /> Clear Image
+                </Button>
+              </div>
+            )}
+             {!currentBgImage && (
+              <div className="mt-2 p-4 border border-dashed rounded-md text-center text-muted-foreground">
+                <ImageIcon className="mx-auto h-8 w-8 mb-2" />
+                No image selected.
+              </div>
+            )}
           </div>
+          
           <div className="grid gap-3">
             <Label htmlFor="apiUrl" className="flex items-center">
               <Link2 className="mr-2 h-4 w-4" /> Chat History API URL
@@ -101,7 +168,7 @@ export function SettingsPanel({
             </Button>
           </div>
         </div>
-        <SheetFooter>
+        <SheetFooter className="sticky bottom-0 bg-card py-4 border-t">
           <SheetClose asChild>
             <Button variant="outline">Cancel</Button>
           </SheetClose>
