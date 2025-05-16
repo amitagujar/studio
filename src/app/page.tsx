@@ -7,11 +7,11 @@ import { Button } from '@/components/ui/button';
 import { ChatInput } from '@/components/chat/ChatInput';
 import { ChatView } from '@/components/chat/ChatView';
 import { SettingsPanel } from '@/components/settings/SettingsPanel';
-import { MindmateLogo } from '@/components/icons/ChameleonLogo'; // Corrected import path
+import { MindmateLogo } from '@/components/icons/ChameleonLogo';
 import type { Message, ChatSettings } from '@/types';
 import { Settings, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { mindmateApiChat } from '@/ai/flows/mindmateApiChatFlow'; // Import the new flow
+import { mindmateApiChat } from '@/ai/flows/mindmateApiChatFlow';
 
 const initialMessages: Message[] = [
   { id: '1', text: 'Welcome to Mindmate!', sender: 'api', timestamp: new Date() },
@@ -25,10 +25,12 @@ const Page: NextPage = () => {
     bgColor: '#F0E6FF', 
     bgImage: '',
     chatHistoryApiUrl: '',
+    chatMessageApiUrl: '', // Initialize new setting
+    chatMessageApiPassword: '', // Initialize new setting
   });
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
-  const [isAiResponding, setIsAiResponding] = useState(false); // For AI response loading
+  const [isAiResponding, setIsAiResponding] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -40,9 +42,20 @@ const Page: NextPage = () => {
           setSettings(currentSettings => ({
             ...currentSettings,
             ...parsedSavedSettings,
+            // Ensure defaults for new fields if not in localStorage
+            chatMessageApiUrl: parsedSavedSettings.chatMessageApiUrl || '',
+            chatMessageApiPassword: parsedSavedSettings.chatMessageApiPassword || '',
           }));
         } catch (error) {
           console.error("Failed to parse settings from localStorage", error);
+          // Set default settings if parsing fails
+           setSettings({
+            bgColor: '#F0E6FF',
+            bgImage: '',
+            chatHistoryApiUrl: '',
+            chatMessageApiUrl: '',
+            chatMessageApiPassword: '',
+          });
         }
       }
     }
@@ -54,6 +67,45 @@ const Page: NextPage = () => {
     }
   }, [settings]);
 
+  const sendToCustomApi = async (userMessage: Message) => {
+    if (settings.chatMessageApiUrl && settings.chatMessageApiPassword) {
+      try {
+        const response = await fetch(settings.chatMessageApiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-API-Password': settings.chatMessageApiPassword,
+          },
+          body: JSON.stringify({
+            text: userMessage.text,
+            sender: userMessage.sender,
+            timestamp: userMessage.timestamp.toISOString(),
+            // You can add more fields here if your Python API expects them
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.text();
+          throw new Error(`Custom API Error ${response.status}: ${errorData || response.statusText}`);
+        }
+        
+        // const responseData = await response.json(); // If your API returns JSON
+        toast({
+          title: 'Message Sent to Custom API',
+          description: `Successfully sent message to: ${settings.chatMessageApiUrl}`,
+        });
+        // console.log('Response from custom API:', responseData);
+      } catch (error) {
+        console.error('Error sending message to custom API:', error);
+        toast({
+          title: 'Custom API Error',
+          description: `Failed to send message: ${(error as Error).message}`,
+          variant: 'destructive',
+        });
+      }
+    }
+  };
+
   const handleSendMessage = async (text: string) => {
     const userMessage: Message = {
       id: crypto.randomUUID(),
@@ -63,6 +115,10 @@ const Page: NextPage = () => {
     };
     setMessages((prevMessages) => [...prevMessages, userMessage]);
     setIsAiResponding(true);
+
+    // Call custom API (fire and forget for now, or handle its response if needed)
+    // This can run in parallel with the Genkit AI call
+    sendToCustomApi(userMessage);
 
     try {
       const aiResponseText = await mindmateApiChat({ userInput: text });

@@ -16,7 +16,7 @@ import {
   SheetClose,
 } from "@/components/ui/sheet";
 import type { ChatSettings } from '@/types';
-import { Palette, Image as ImageIcon, Link2, Check, XCircle, Upload } from 'lucide-react';
+import { Palette, Image as ImageIcon, Link2, Check, XCircle, Upload, KeyRound, Send } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface SettingsPanelProps {
@@ -37,6 +37,8 @@ export function SettingsPanel({
   const [currentBgColor, setCurrentBgColor] = React.useState(settings.bgColor);
   const [currentBgImage, setCurrentBgImage] = React.useState(settings.bgImage);
   const [currentApiUrl, setCurrentApiUrl] = React.useState(settings.chatHistoryApiUrl);
+  const [currentChatMessageApiUrl, setCurrentChatMessageApiUrl] = React.useState(settings.chatMessageApiUrl || '');
+  const [currentChatMessageApiPassword, setCurrentChatMessageApiPassword] = React.useState(settings.chatMessageApiPassword || '');
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -44,6 +46,8 @@ export function SettingsPanel({
     setCurrentBgColor(settings.bgColor);
     setCurrentBgImage(settings.bgImage);
     setCurrentApiUrl(settings.chatHistoryApiUrl);
+    setCurrentChatMessageApiUrl(settings.chatMessageApiUrl || '');
+    setCurrentChatMessageApiPassword(settings.chatMessageApiPassword || '');
   }, [settings, isOpen]); // Also reset on open to reflect current live settings
 
   const handleApplyChanges = () => {
@@ -51,8 +55,14 @@ export function SettingsPanel({
       bgColor: currentBgColor,
       bgImage: currentBgImage,
       chatHistoryApiUrl: currentApiUrl,
+      chatMessageApiUrl: currentChatMessageApiUrl,
+      chatMessageApiPassword: currentChatMessageApiPassword,
     });
     onOpenChange(false);
+    toast({
+      title: "Settings Applied",
+      description: "Your chat settings have been updated.",
+    });
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -94,8 +104,8 @@ export function SettingsPanel({
         <SheetHeader>
           <SheetTitle>Chat Settings</SheetTitle>
           <SheetDescription>
-            Customize your chat experience. Changes will be applied when you click "Apply".
-            <br />For mock Python API history, use URL: <code>/api/python-chat-history</code>
+            Customize your chat experience. Changes are saved locally.
+            <br />Mock history URL: <code>/api/python-chat-history</code>
           </SheetDescription>
         </SheetHeader>
         <div className="grid gap-6 py-6">
@@ -136,7 +146,7 @@ export function SettingsPanel({
                     alt="Background preview"
                     layout="fill"
                     objectFit="cover"
-                    unoptimized={currentBgImage.startsWith('data:image')} // Data URLs don't need Next.js optimization
+                    unoptimized={currentBgImage.startsWith('data:image')}
                   />
                 </div>
                 <Button variant="outline" size="sm" onClick={handleClearImage} className="w-full">
@@ -167,8 +177,43 @@ export function SettingsPanel({
               Load History
             </Button>
           </div>
+
+          <div className="grid gap-3 border-t pt-4">
+             <h3 className="text-lg font-medium flex items-center">
+              <Send className="mr-2 h-5 w-5 text-primary" /> Custom Message API
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              Optionally, send user messages to your own Python API endpoint.
+            </p>
+            <Label htmlFor="chatMessageApiUrl" className="flex items-center">
+              <Link2 className="mr-2 h-4 w-4" /> API Endpoint URL
+            </Label>
+            <Input
+              id="chatMessageApiUrl"
+              type="text"
+              placeholder="https://your-python-api.com/chat"
+              value={currentChatMessageApiUrl}
+              onChange={(e) => setCurrentChatMessageApiUrl(e.target.value)}
+            />
+          </div>
+           <div className="grid gap-3">
+            <Label htmlFor="chatMessageApiPassword" className="flex items-center">
+              <KeyRound className="mr-2 h-4 w-4" /> API Password
+            </Label>
+            <Input
+              id="chatMessageApiPassword"
+              type="password"
+              placeholder="Enter API password"
+              value={currentChatMessageApiPassword}
+              onChange={(e) => setCurrentChatMessageApiPassword(e.target.value)}
+            />
+            <p className="text-xs text-destructive">
+              Note: This password will be sent in a header. For production, use more secure authentication.
+            </p>
+          </div>
+
         </div>
-        <SheetFooter className="sticky bottom-0 bg-card py-4 border-t">
+        <SheetFooter className="sticky bottom-0 bg-card py-4 border-t mt-auto">
           <SheetClose asChild>
             <Button variant="outline">Cancel</Button>
           </SheetClose>
