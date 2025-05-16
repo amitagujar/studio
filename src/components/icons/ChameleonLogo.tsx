@@ -7,7 +7,7 @@ export function ChameleonLogo(props: SVGProps<SVGSVGElement>) {
       viewBox="0 0 100 100"
       width="40"
       height="40"
-      aria-label="Chameleon Chat Logo"
+      aria-label="Mindmate Logo"
       {...props}
     >
       <path

@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Chameleon Chat',
+  title: 'Mindmate',
   description: 'A customizable chat interface by Firebase Studio',
 };
 

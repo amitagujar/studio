@@ -12,7 +12,7 @@ import { Settings, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const initialMessages: Message[] = [
-  { id: '1', text: 'Welcome to Chameleon Chat!', sender: 'api', timestamp: new Date() },
+  { id: '1', text: 'Welcome to Mindmate!', sender: 'api', timestamp: new Date() },
   { id: '2', text: 'Customize your background and load chat history using the settings panel.', sender: 'api', timestamp: new Date(Date.now() + 1000) },
 ];
 
@@ -29,7 +29,7 @@ const Page: NextPage = () => {
 
   // Load settings from localStorage on mount
   useEffect(() => {
-    const savedSettings = localStorage.getItem('chameleonChatSettings');
+    const savedSettings = localStorage.getItem('mindmateChatSettings');
     if (savedSettings) {
       try {
         const parsedSettings = JSON.parse(savedSettings);
@@ -49,7 +49,7 @@ const Page: NextPage = () => {
 
   // Save settings to localStorage when they change
   useEffect(() => {
-    localStorage.setItem('chameleonChatSettings', JSON.stringify(settings));
+    localStorage.setItem('mindmateChatSettings', JSON.stringify(settings));
   }, [settings]);
 
 
@@ -114,7 +114,7 @@ const Page: NextPage = () => {
       <header className="flex items-center justify-between p-3 sm:p-4 border-b sticky top-0 z-10 bg-background/80 backdrop-blur-md">
         <div className="flex items-center gap-2">
           <ChameleonLogo className="h-8 w-8" />
-          <h1 className="text-xl sm:text-2xl font-semibold text-primary">Chameleon Chat</h1>
+          <h1 className="text-xl sm:text-2xl font-semibold text-primary">Mindmate</h1>
         </div>
         <Button variant="ghost" size="icon" onClick={() => setIsSettingsOpen(true)} aria-label="Open settings">
           <Settings className="h-5 w-5" />
