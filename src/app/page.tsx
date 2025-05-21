@@ -17,6 +17,7 @@ const initialMessages: Message[] = [
   { id: '1', text: 'Welcome to Mindmate!', sender: 'api', timestamp: new Date() },
   { id: '2', text: 'Customize your background and load chat history using the settings panel.', sender: 'api', timestamp: new Date(Date.now() + 1000) },
   { id: '3', text: 'To load sample history from a mock Python API, set the history URL in settings to: /api/python-chat-history', sender: 'api', timestamp: new Date(Date.now() + 2000) },
+  { id: '4', text: 'You can also configure a custom API endpoint in settings for the AI to potentially use.', sender: 'api', timestamp: new Date(Date.now() + 3000) },
 ];
 
 const Page: NextPage = () => {
@@ -25,8 +26,8 @@ const Page: NextPage = () => {
     bgColor: '#F0E6FF', 
     bgImage: '',
     chatHistoryApiUrl: '',
-    chatMessageApiUrl: '', // Initialize new setting
-    chatMessageApiPassword: '', // Initialize new setting
+    chatMessageApiUrl: '',
+    chatMessageApiPassword: '',
   });
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
@@ -42,13 +43,11 @@ const Page: NextPage = () => {
           setSettings(currentSettings => ({
             ...currentSettings,
             ...parsedSavedSettings,
-            // Ensure defaults for new fields if not in localStorage
             chatMessageApiUrl: parsedSavedSettings.chatMessageApiUrl || '',
             chatMessageApiPassword: parsedSavedSettings.chatMessageApiPassword || '',
           }));
         } catch (error) {
           console.error("Failed to parse settings from localStorage", error);
-          // Set default settings if parsing fails
            setSettings({
             bgColor: '#F0E6FF',
             bgImage: '',
@@ -67,45 +66,6 @@ const Page: NextPage = () => {
     }
   }, [settings]);
 
-  const sendToCustomApi = async (userMessage: Message) => {
-    if (settings.chatMessageApiUrl && settings.chatMessageApiPassword) {
-      try {
-        const response = await fetch(settings.chatMessageApiUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-API-Password': settings.chatMessageApiPassword,
-          },
-          body: JSON.stringify({
-            text: userMessage.text,
-            sender: userMessage.sender,
-            timestamp: userMessage.timestamp.toISOString(),
-            // You can add more fields here if your Python API expects them
-          }),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.text();
-          throw new Error(`Custom API Error ${response.status}: ${errorData || response.statusText}`);
-        }
-        
-        // const responseData = await response.json(); // If your API returns JSON
-        toast({
-          title: 'Message Sent to Custom API',
-          description: `Successfully sent message to: ${settings.chatMessageApiUrl}`,
-        });
-        // console.log('Response from custom API:', responseData);
-      } catch (error) {
-        console.error('Error sending message to custom API:', error);
-        toast({
-          title: 'Custom API Error',
-          description: `Failed to send message: ${(error as Error).message}`,
-          variant: 'destructive',
-        });
-      }
-    }
-  };
-
   const handleSendMessage = async (text: string) => {
     const userMessage: Message = {
       id: crypto.randomUUID(),
@@ -116,15 +76,17 @@ const Page: NextPage = () => {
     setMessages((prevMessages) => [...prevMessages, userMessage]);
     setIsAiResponding(true);
 
-    // Call custom API (fire and forget for now, or handle its response if needed)
-    // This can run in parallel with the Genkit AI call
-    sendToCustomApi(userMessage);
-
     try {
-      const aiResponseText = await mindmateApiChat({ userInput: text });
+      // Pass custom API settings to the Genkit flow
+      const aiResponse = await mindmateApiChat({ 
+        userInput: text,
+        customApiUrl: settings.chatMessageApiUrl,
+        customApiPassword: settings.chatMessageApiPassword
+      });
+
       const apiMessage: Message = {
         id: crypto.randomUUID(),
-        text: aiResponseText.response,
+        text: aiResponse.response,
         sender: 'api',
         timestamp: new Date(),
       };
@@ -140,7 +102,7 @@ const Page: NextPage = () => {
       setMessages((prevMessages) => [...prevMessages, errorMessage]);
       toast({
         title: 'AI Error',
-        description: 'Could not get a response from the AI.',
+        description: (error as Error).message || 'Could not get a response from the AI.',
         variant: 'destructive',
       });
     } finally {
@@ -166,7 +128,8 @@ const Page: NextPage = () => {
     try {
       const response = await fetch(settings.chatHistoryApiUrl);
       if (!response.ok) {
-        throw new Error(`API request failed with status ${response.status}`);
+        const errorText = await response.text();
+        throw new Error(`API request failed with status ${response.status}: ${errorText || response.statusText}`);
       }
       const historyMessages: Message[] = await response.json();
       
