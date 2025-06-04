@@ -109,7 +109,7 @@ export function SettingsPanel({
 
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[400px] sm:w-[540px] bg-card overflow-y-auto flex flex-col">
+      <SheetContent className="w-[400px] sm:w-[540px] bg-gradient-to-br from-[hsl(var(--background))] to-[hsl(var(--secondary))] text-foreground overflow-y-auto flex flex-col">
         <SheetHeader>
           <SheetTitle>Chat Settings</SheetTitle>
           <SheetDescription>
@@ -216,7 +216,7 @@ export function SettingsPanel({
           </div>
 
         </div>
-        <SheetFooter className="sticky bottom-0 bg-card py-4 border-t mt-auto">
+        <SheetFooter className="sticky bottom-0 bg-transparent py-4 border-t mt-auto"> {/* Made footer background transparent to blend with gradient */}
           <SheetClose asChild>
             <Button variant="outline">Cancel</Button>
           </SheetClose>
