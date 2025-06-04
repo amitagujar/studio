@@ -14,7 +14,7 @@ import {
   SheetTitle,
   SheetFooter,
   SheetClose,
-} from "@/components/ui/sheet";
+} from '@/components/ui/sheet';
 import type { ChatSettings } from '@/types';
 import { Palette, Image as ImageIcon, Link2, Check, XCircle, Upload, KeyRound, Send } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -50,7 +50,7 @@ export function SettingsPanel({
     setCurrentChatMessageApiPassword(settings.chatMessageApiPassword || '');
   }, [settings, isOpen]); // Also reset on open to reflect current live settings
 
-  const handleApplyChanges = () => {
+  const handleApplyChanges = React.useCallback(() => {
     onSettingsChange({
       bgColor: currentBgColor,
       bgImage: currentBgImage,
@@ -63,7 +63,16 @@ export function SettingsPanel({
       title: "Settings Applied",
       description: "Your chat settings have been updated.",
     });
-  };
+  }, [
+        currentBgColor, 
+        currentBgImage, 
+        currentApiUrl, 
+        currentChatMessageApiUrl, 
+        currentChatMessageApiPassword, 
+        onSettingsChange, 
+        onOpenChange, 
+        toast
+    ]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -100,15 +109,16 @@ export function SettingsPanel({
 
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[400px] sm:w-[540px] bg-card overflow-y-auto">
+      <SheetContent className="w-[400px] sm:w-[540px] bg-gradient-to-br from-[hsl(var(--background))] to-[hsl(var(--secondary))] text-foreground overflow-y-auto flex flex-col">
         <SheetHeader>
           <SheetTitle>Chat Settings</SheetTitle>
           <SheetDescription>
             Customize your chat experience. Changes are saved locally.
             <br />Mock history URL: <code>/api/python-chat-history</code>
+            <br />AI may use Custom Message API if configured.
           </SheetDescription>
         </SheetHeader>
-        <div className="grid gap-6 py-6">
+        <div className="grid gap-6 py-6 flex-grow overflow-y-auto pr-2"> {/* Added pr-2 for scrollbar space */}
           <div className="grid gap-3">
             <Label htmlFor="bgColor" className="flex items-center">
               <Palette className="mr-2 h-4 w-4" /> Background Color
@@ -132,7 +142,7 @@ export function SettingsPanel({
               accept="image/*"
               ref={fileInputRef}
               onChange={handleFileChange}
-              className="hidden" // Hidden, triggered by button
+              className="hidden" 
             />
             <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
               <Upload className="mr-2 h-4 w-4" /> Choose Image
@@ -178,42 +188,35 @@ export function SettingsPanel({
             </Button>
           </div>
 
-          <div className="grid gap-3 border-t pt-4">
-             <h3 className="text-lg font-medium flex items-center">
-              <Send className="mr-2 h-5 w-5 text-primary" /> Custom Message API
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              Optionally, send user messages to your own Python API endpoint.
-            </p>
+          <div className="grid gap-3">
             <Label htmlFor="chatMessageApiUrl" className="flex items-center">
-              <Link2 className="mr-2 h-4 w-4" /> API Endpoint URL
+              <Send className="mr-2 h-4 w-4" /> Custom Message API URL (for AI Tool)
             </Label>
             <Input
               id="chatMessageApiUrl"
               type="text"
-              placeholder="https://your-python-api.com/chat"
+              placeholder="e.g., https://your-service.com/api/process"
               value={currentChatMessageApiUrl}
               onChange={(e) => setCurrentChatMessageApiUrl(e.target.value)}
             />
+             <p className="text-xs text-muted-foreground">The AI will use this API via a tool if it deems it necessary and if a URL is provided.</p>
           </div>
-           <div className="grid gap-3">
+
+          <div className="grid gap-3">
             <Label htmlFor="chatMessageApiPassword" className="flex items-center">
-              <KeyRound className="mr-2 h-4 w-4" /> API Password
+              <KeyRound className="mr-2 h-4 w-4" /> Custom Message API Password
             </Label>
             <Input
               id="chatMessageApiPassword"
               type="password"
-              placeholder="Enter API password"
+              placeholder="Enter API password if required"
               value={currentChatMessageApiPassword}
               onChange={(e) => setCurrentChatMessageApiPassword(e.target.value)}
             />
-            <p className="text-xs text-destructive">
-              Note: This password will be sent in a header. For production, use more secure authentication.
-            </p>
           </div>
 
         </div>
-        <SheetFooter className="sticky bottom-0 bg-card py-4 border-t mt-auto">
+        <SheetFooter className="sticky bottom-0 bg-transparent py-4 border-t mt-auto"> {/* Made footer background transparent to blend with gradient */}
           <SheetClose asChild>
             <Button variant="outline">Cancel</Button>
           </SheetClose>
