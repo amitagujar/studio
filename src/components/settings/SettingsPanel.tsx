@@ -14,7 +14,7 @@ import {
   SheetTitle,
   SheetFooter,
   SheetClose,
-} from "@/components/ui/sheet";
+} from '@/components/ui/sheet';
 import type { ChatSettings } from '@/types';
 import { Palette, Image as ImageIcon, Link2, Check, XCircle, Upload, KeyRound, Send } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -34,23 +34,19 @@ export function SettingsPanel({
   onSettingsChange,
   onLoadHistory,
 }: SettingsPanelProps) {
-  const [currentBgColor, setCurrentBgColor] = React.useState(settings.bgColor);
-  const [currentBgImage, setCurrentBgImage] = React.useState(settings.bgImage);
-  const [currentApiUrl, setCurrentApiUrl] = React.useState(settings.chatHistoryApiUrl);
-  const [currentChatMessageApiUrl, setCurrentChatMessageApiUrl] = React.useState(settings.chatMessageApiUrl || '');
-  const [currentChatMessageApiPassword, setCurrentChatMessageApiPassword] = React.useState(settings.chatMessageApiPassword || '');
+  const [currentBgColor, setCurrentBgColor] = React.useState(settings.bgColor)
+  const [currentBgImage, setCurrentBgImage] = React.useState(settings.bgImage)
+  const [currentApiUrl, setCurrentApiUrl] = React.useState(settings.chatHistoryApiUrl)
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   React.useEffect(() => {
-    setCurrentBgColor(settings.bgColor);
-    setCurrentBgImage(settings.bgImage);
-    setCurrentApiUrl(settings.chatHistoryApiUrl);
-    setCurrentChatMessageApiUrl(settings.chatMessageApiUrl || '');
-    setCurrentChatMessageApiPassword(settings.chatMessageApiPassword || '');
+    setCurrentBgColor(settings.bgColor)
+    setCurrentBgImage(settings.bgImage)
+    setCurrentApiUrl(settings.chatHistoryApiUrl)
   }, [settings, isOpen]); // Also reset on open to reflect current live settings
 
-  const handleApplyChanges = () => {
+  const handleApplyChanges = React.useCallback(() => {
     onSettingsChange({
       bgColor: currentBgColor,
       bgImage: currentBgImage,
@@ -63,7 +59,7 @@ export function SettingsPanel({
       title: "Settings Applied",
       description: "Your chat settings have been updated.",
     });
-  };
+  }, [currentBgColor, currentBgImage, currentApiUrl, onSettingsChange, onOpenChange, toast]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -176,40 +172,6 @@ export function SettingsPanel({
             <Button variant="outline" onClick={onLoadHistory} className="mt-2" disabled={!currentApiUrl}>
               Load History
             </Button>
-          </div>
-
-          <div className="grid gap-3 border-t pt-4">
-             <h3 className="text-lg font-medium flex items-center">
-              <Send className="mr-2 h-5 w-5 text-primary" /> Custom Message API
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              Optionally, send user messages to your own Python API endpoint.
-            </p>
-            <Label htmlFor="chatMessageApiUrl" className="flex items-center">
-              <Link2 className="mr-2 h-4 w-4" /> API Endpoint URL
-            </Label>
-            <Input
-              id="chatMessageApiUrl"
-              type="text"
-              placeholder="https://your-python-api.com/chat"
-              value={currentChatMessageApiUrl}
-              onChange={(e) => setCurrentChatMessageApiUrl(e.target.value)}
-            />
-          </div>
-           <div className="grid gap-3">
-            <Label htmlFor="chatMessageApiPassword" className="flex items-center">
-              <KeyRound className="mr-2 h-4 w-4" /> API Password
-            </Label>
-            <Input
-              id="chatMessageApiPassword"
-              type="password"
-              placeholder="Enter API password"
-              value={currentChatMessageApiPassword}
-              onChange={(e) => setCurrentChatMessageApiPassword(e.target.value)}
-            />
-            <p className="text-xs text-destructive">
-              Note: This password will be sent in a header. For production, use more secure authentication.
-            </p>
           </div>
 
         </div>
